@@ -11,7 +11,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
+    - name: Fix directory structure
+      run: |
+        if [ -d "car-meow-app" ]; then
+          cp -r car-meow-app/* .
+          cp -r car-meow-app/.* . 2>/dev/null || true
+        fi
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
