@@ -1,0 +1,57 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Install dependencies
+      run: |
+        npm install
+        npm install -D @capacitor/cli
+
+    - name: Build web
+      run: npm run build
+
+    - name: Setup Capacitor
+      run: |
+        npx cap init "喵語翻譯機" com.catmeow.analyzer --web-dir dist
+        npx cap add android
+        npx cap sync
+
+    - name: Add microphone permissions
+      run: |
+        sed -i 's|<application|<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />\n\n    <application|' android/app/src/main/AndroidManifest.xml
+
+    - name: Build APK
+      run: |
+        cd android
+        chmod +x ./gradlew
+        ./gradlew assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: 喵語翻譯機-APK
+        path: android/app/build/outputs/apk/debug/app-debug.apk
